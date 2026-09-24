@@ -1,0 +1,10 @@
+# Small model for fast local debugging. The tokenizer is unchanged (16000 tokens),
+# so vocab_size stays 16000; only the transformer is shrunk.
+experiment_id: debug
+model:
+  vocab_size: 16000
+  hidden_size: 128
+  num_layers: 2
+  num_attention_heads: 4
+  ffn_hidden_size: 384
+  max_sequence_length: 128
