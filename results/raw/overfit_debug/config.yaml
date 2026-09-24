@@ -1,0 +1,19 @@
+experiment_id: overfit_debug
+seed: 42
+device: auto
+amp_dtype: none
+model:
+  vocab_size: 16000
+  hidden_size: 128
+  num_layers: 2
+  num_attention_heads: 4
+  ffn_hidden_size: 384
+  max_sequence_length: 128
+data:
+  dataset_name: roneneldan/TinyStories
+  text_field: text
+  val_fraction: 0.02
+  split_seed: 42
+tokenizer:
+  vocab_size: 16000
+  dir: artifacts/tokenizer

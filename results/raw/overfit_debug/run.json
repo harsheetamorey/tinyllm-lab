@@ -1,0 +1,8 @@
+{
+  "experiment_id": "overfit_debug",
+  "started_at": "2026-09-24T22:33:56+00:00",
+  "device": "mps",
+  "amp_dtype": null,
+  "git_commit": "1de427b17ae2cc2ea6205dbd07f3042a74a99ec4",
+  "git_dirty": true
+}

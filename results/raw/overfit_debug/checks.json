@@ -1,0 +1,27 @@
+[
+  {
+    "name": "loss decreases substantially",
+    "passed": true,
+    "detail": "final/start = 0.0477/9.8263 = 0.0049 (need <= 0.1)"
+  },
+  {
+    "name": "loss stays finite",
+    "passed": true,
+    "detail": "151/151 logged losses finite"
+  },
+  {
+    "name": "gradients are finite",
+    "passed": true,
+    "detail": "max grad norm 1.226"
+  },
+  {
+    "name": "parameters change",
+    "passed": true,
+    "detail": "100% of parameter tensors changed"
+  },
+  {
+    "name": "generation memorizes training text",
+    "passed": true,
+    "detail": "token match 97.8% (need >= 80%), exact sequences 97.0%"
+  }
+]
