@@ -11,7 +11,7 @@ import sys
 
 from tinyllm.config import Config
 from tinyllm.data.pretrain_dataset import load_pretrain_splits
-from tinyllm.data.tokenizer import BPETokenizer
+from tinyllm.data.tokenizer_metadata import load_verified_tokenizer
 from tinyllm.eval.tokenizer_stats import compute_stats, encode_examples, save_report
 
 REPORT_PATH = "results/tables/tokenizer_stats.json"
@@ -19,7 +19,7 @@ REPORT_PATH = "results/tables/tokenizer_stats.json"
 
 def main(config_path: str | None = None) -> None:
     cfg = Config.from_yaml(config_path) if config_path else Config()
-    tokenizer = BPETokenizer.load(cfg.tokenizer.dir)
+    tokenizer = load_verified_tokenizer(cfg.tokenizer.dir)
     validation = load_pretrain_splits(cfg.data)["validation"]
 
     stats = compute_stats(tokenizer, validation[cfg.data.text_field])
