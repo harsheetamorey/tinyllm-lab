@@ -1,0 +1,24 @@
+{
+  "algorithm": "byte-level BPE",
+  "library": "tokenizers 0.23.2",
+  "vocab_size": 16000,
+  "special_tokens": {
+    "bos": {
+      "token": "<bos>",
+      "id": 0
+    },
+    "eos": {
+      "token": "<eos>",
+      "id": 1
+    }
+  },
+  "training_data": {
+    "dataset": "roneneldan/TinyStories",
+    "split": "train",
+    "val_fraction": 0.02,
+    "split_seed": 42,
+    "num_documents": 2077325
+  },
+  "artifact_path": "artifacts/tokenizer/tokenizer.json",
+  "artifact_sha256": "fbd850e76de08d79a2a76c8957048d9c9ba042cfc65de43980c35ffd0ca1d6a9"
+}

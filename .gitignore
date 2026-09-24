@@ -11,7 +11,8 @@ venv/
 
 # Data & artifacts (large, regenerable)
 /data/
-artifacts/
+artifacts/*
+!artifacts/tokenizer/
 *.model
 *.vocab
 *.pt

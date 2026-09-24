@@ -1,0 +1,73 @@
+{
+  "corpus": "roneneldan/TinyStories validation split (42,394 documents)",
+  "stats": {
+    "vocab_size": 16000,
+    "num_documents": 42394,
+    "total_characters": 37837548,
+    "total_tokens": 9182619,
+    "avg_tokens_per_document": 216.6018540359485,
+    "avg_characters_per_token": 4.12056168289243,
+    "unknown_token_frequency": null,
+    "unknown_token_note": "byte-level BPE has no unknown token: every string is representable"
+  },
+  "examples": [
+    {
+      "text": "Once upon a time...",
+      "ids": [
+        432,
+        448,
+        260,
+        397,
+        6083
+      ],
+      "tokens": [
+        "Once",
+        " upon",
+        " a",
+        " time",
+        "..."
+      ],
+      "decoded": "Once upon a time..."
+    },
+    {
+      "text": "Machine learning is...",
+      "ids": [
+        46,
+        586,
+        801,
+        2993,
+        408,
+        6083
+      ],
+      "tokens": [
+        "M",
+        "ach",
+        "ine",
+        " learning",
+        " is",
+        "..."
+      ],
+      "decoded": "Machine learning is..."
+    },
+    {
+      "text": "Hello, how are you?",
+      "ids": [
+        1411,
+        13,
+        713,
+        441,
+        347,
+        32
+      ],
+      "tokens": [
+        "Hello",
+        ",",
+        " how",
+        " are",
+        " you",
+        "?"
+      ],
+      "decoded": "Hello, how are you?"
+    }
+  ]
+}
