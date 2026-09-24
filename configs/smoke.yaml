@@ -1,0 +1,24 @@
+# Short pipeline check: debug-sized model, a few thousand stories, 40 optimizer steps.
+# Batch = 16 seqs x 2 accumulation steps x 128 tokens = 4096 tokens per optimizer step.
+experiment_id: smoke_debug
+model:
+  vocab_size: 16000
+  hidden_size: 128
+  num_layers: 2
+  num_attention_heads: 4
+  ffn_hidden_size: 384
+  max_sequence_length: 128
+data:
+  max_train_stories: 3000
+  max_val_stories: 300
+train:
+  max_steps: 40
+  micro_batch_size: 16
+  grad_accum_steps: 2
+  learning_rate: 1.0e-3
+  min_learning_rate: 1.0e-4
+  warmup_steps: 5
+  log_every: 5
+  eval_every: 10
+  eval_batches: 5
+  checkpoint_every: 20

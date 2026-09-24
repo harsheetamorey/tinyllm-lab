@@ -1,0 +1,8 @@
+{
+  "experiment_id": "smoke_debug",
+  "started_at": "2026-09-24T23:00:26+00:00",
+  "device": "mps",
+  "amp_dtype": "bfloat16",
+  "git_commit": "b504cd8768f2e35b3690120d373ed8a465fd45ab",
+  "git_dirty": true
+}

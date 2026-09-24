@@ -84,3 +84,19 @@ def test_run_context_refuses_to_overwrite(tmp_path):
     with pytest.raises(FileExistsError):
         RunContext.create(config, results_root=tmp_path)
     RunContext.create(config, results_root=tmp_path, exist_ok=True)
+
+
+def test_run_context_overwrite_replaces_directory_only_when_asked(tmp_path):
+    config = Config(experiment_id="t", device="cpu")
+    ctx = RunContext.create(config, results_root=tmp_path)
+    stale = ctx.run_dir / "stale.txt"
+    stale.write_text("old")
+
+    with pytest.raises(FileExistsError):
+        RunContext.create(config, results_root=tmp_path)
+    assert stale.exists()
+
+    RunContext.create(config, results_root=tmp_path, overwrite=True)
+    assert not stale.exists()
+    with pytest.raises(ValueError):
+        RunContext.create(config, results_root=tmp_path, overwrite=True, exist_ok=True)

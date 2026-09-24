@@ -1,6 +1,6 @@
 """Overfit the debug model on ~200 TinyStories to sanity-check the training path.
 
-Usage: python -m scripts.overfit_tiny
+Usage: python -m scripts.overfit_tiny [--overwrite]
 
 Writes to results/: raw/overfit_debug/{train_log.csv,checks.json,...},
 generations/overfit_debug.json and plots/overfit_loss.png. Exits non-zero if
@@ -9,6 +9,7 @@ any check fails; if it does, do not start full pretraining.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import math
@@ -77,10 +78,17 @@ def save_plot(logs: list[StepLog], path: Path) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Overfit the debug model on a tiny dataset.")
+    parser.add_argument("--overwrite", action="store_true", help=f"replace an existing results/raw/{EXPERIMENT_ID}")
+    overwrite = parser.parse_args().overwrite
+
     run = OverfitConfig()
     cfg = Config.from_yaml("configs/debug.yaml")
     cfg.experiment_id, cfg.amp_dtype = EXPERIMENT_ID, "none"  # plain fp32, keep it simple
-    ctx = RunContext.create(cfg, exist_ok=True)  # re-runs overwrite this experiment only
+    try:
+        ctx = RunContext.create(cfg, overwrite=overwrite)
+    except FileExistsError:
+        parser.error(f"results/raw/{EXPERIMENT_ID} already exists; pass --overwrite to replace it")
     ctx.save_metadata()
     device = ctx.device
 

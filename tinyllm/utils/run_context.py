@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -71,14 +72,21 @@ class RunContext:
         config: Config,
         results_root: Path = DEFAULT_RESULTS_ROOT,
         exist_ok: bool = False,
+        overwrite: bool = False,
         deterministic: bool = False,
     ) -> "RunContext":
         """Set up a run for ``config``.
 
-        Raises ``FileExistsError`` if the run directory already exists and
-        ``exist_ok`` is False, so earlier results are never overwritten by accident.
+        Raises ``FileExistsError`` if the run directory already exists, so
+        earlier results are never overwritten by accident. Two explicit opt-ins:
+        ``exist_ok`` reuses the directory as is (e.g. to resume), ``overwrite``
+        deletes it first and starts from an empty directory.
         """
+        if exist_ok and overwrite:
+            raise ValueError("exist_ok and overwrite are mutually exclusive")
         run_dir = Path(results_root) / config.experiment_id
+        if overwrite and run_dir.exists():
+            shutil.rmtree(run_dir)
         run_dir.mkdir(parents=True, exist_ok=exist_ok)
 
         set_seed(config.seed, deterministic=deterministic)

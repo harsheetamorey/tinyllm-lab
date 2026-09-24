@@ -1,0 +1,20 @@
+{
+  "python_version": "3.11.5",
+  "python_executable": "/Users/harsheetav/tinyllm-lab/.venv/bin/python",
+  "platform": "macOS-14.0-arm64-arm-64bit",
+  "machine": "arm64",
+  "processor": "arm",
+  "hostname": "Harsheetas-MacBook-Air-2.local",
+  "torch_version": "2.14.0",
+  "torch_git_version": "08187d9e0fba026dc8217405802ab5381dc88d90",
+  "cuda_available": false,
+  "cuda_version": null,
+  "cudnn_version": null,
+  "mps_available": true,
+  "device_count": 1,
+  "gpu_names": [
+    "Apple MPS (arm)"
+  ],
+  "bf16_supported": false,
+  "errors": []
+}

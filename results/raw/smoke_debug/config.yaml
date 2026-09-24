@@ -1,0 +1,37 @@
+experiment_id: smoke_debug
+seed: 42
+device: auto
+amp_dtype: auto
+model:
+  vocab_size: 16000
+  hidden_size: 128
+  num_layers: 2
+  num_attention_heads: 4
+  ffn_hidden_size: 384
+  max_sequence_length: 128
+data:
+  dataset_name: roneneldan/TinyStories
+  text_field: text
+  val_fraction: 0.02
+  split_seed: 42
+  max_train_stories: 3000
+  max_val_stories: 300
+tokenizer:
+  vocab_size: 16000
+  dir: artifacts/tokenizer
+train:
+  max_steps: 40
+  micro_batch_size: 16
+  grad_accum_steps: 2
+  learning_rate: 0.001
+  min_learning_rate: 0.0001
+  warmup_steps: 5
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1.0e-08
+  grad_clip: 1.0
+  log_every: 5
+  eval_every: 10
+  eval_batches: 5
+  checkpoint_every: 20
