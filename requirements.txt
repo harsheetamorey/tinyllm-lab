@@ -1,0 +1,19 @@
+# Core
+torch>=2.4
+numpy>=1.24
+pyyaml>=6.0
+
+# Data / tokenizer (used from Phase 1 onward)
+datasets>=2.12
+sentencepiece>=0.2
+tokenizers>=0.19
+
+# Utilities
+tqdm>=4.66
+
+# Evaluation / plotting (used from Phase 10 onward)
+matplotlib>=3.7
+rouge-score>=0.1.2
+
+# Dev
+pytest>=7.4

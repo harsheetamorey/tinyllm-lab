@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Envs
+.venv/
+venv/
+
+# Data & artifacts (large, regenerable)
+/data/
+artifacts/
+*.model
+*.vocab
+*.pt
+*.ckpt
+*.bin
+
+# Results: keep structure + metadata, ignore heavy blobs
+results/raw/**/checkpoints/
+results/**/*.npy
+results/**/*.npz
+
+# OS
+.DS_Store
+
+# Local assistant notes
+CLAUDE.md
+
+# Secrets
+.env
