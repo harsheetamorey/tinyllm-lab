@@ -63,6 +63,7 @@ class DataConfig:
     text_field: str = "text"
     val_fraction: float = 0.02
     split_seed: int = 42
+    token_cache_dir: str = "data/token_cache"  # tokenized + packed splits (git-ignored)
     max_train_stories: int | None = None  # cap for quick runs; None = the whole split
     max_val_stories: int | None = None
 

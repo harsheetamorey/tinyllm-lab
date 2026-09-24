@@ -44,6 +44,12 @@ class Tokenizer(ABC):
     def encode(self, text: str, add_bos: bool = False, add_eos: bool = False) -> list[int]:
         """Turn ``text`` into token ids, optionally wrapped in BOS / EOS."""
 
+    def encode_batch(
+        self, texts: Sequence[str], add_bos: bool = False, add_eos: bool = False
+    ) -> list[list[int]]:
+        """Encode many texts; same result as calling :meth:`encode` on each (subclasses may be faster)."""
+        return [self.encode(t, add_bos=add_bos, add_eos=add_eos) for t in texts]
+
     @abstractmethod
     def decode(self, ids: Sequence[int], skip_special_tokens: bool = True) -> str:
         """Turn token ids back into text."""
@@ -114,6 +120,23 @@ class BPETokenizer(Tokenizer):
         if add_eos:
             ids = [*ids, self._eos_id]
         return ids
+
+    def encode_batch(
+        self, texts: Sequence[str], add_bos: bool = False, add_eos: bool = False
+    ) -> list[list[int]]:
+        """Parallel batch encode; texts containing literal "<bos>"/"<eos>" take the safe per-text path."""
+        ids: list[list[int] | None] = [None] * len(texts)
+        plain = [i for i, text in enumerate(texts) if not _SPECIAL_RE.search(text)]
+        encodings = self._tok.encode_batch([texts[i] for i in plain], add_special_tokens=False)
+        for i, encoding in zip(plain, encodings):
+            ids[i] = encoding.ids
+        for i, text in enumerate(texts):
+            if ids[i] is None:
+                ids[i] = self._encode_text(text)
+        return [
+            [*([self._bos_id] if add_bos else []), *doc, *([self._eos_id] if add_eos else [])]
+            for doc in ids
+        ]
 
     def decode(self, ids: Sequence[int], skip_special_tokens: bool = True) -> str:
         return self._tok.decode(list(ids), skip_special_tokens=skip_special_tokens)

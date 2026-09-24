@@ -90,3 +90,12 @@ def test_config_tokenizer_defaults_and_vocab_consistency():
     assert cfg.tokenizer.vocab_size == cfg.model.vocab_size == 16000
     with pytest.raises(ValueError, match="must equal"):
         Config(model=ModelConfig(vocab_size=8000), tokenizer=TokenizerConfig(vocab_size=16000))
+
+
+def test_encode_batch_matches_encode(tmp_path):
+    tok = BPETokenizer.train(["hello world story", "another tiny story here"] * 20, vocab_size=300)
+    texts = ["hello world", "", "a <bos> literal <eos> inside", "another story"]
+    for add_bos, add_eos in [(False, False), (True, True), (True, False)]:
+        assert tok.encode_batch(texts, add_bos=add_bos, add_eos=add_eos) == [
+            tok.encode(t, add_bos=add_bos, add_eos=add_eos) for t in texts
+        ]
