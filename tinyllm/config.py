@@ -1,7 +1,8 @@
 """Central config for a TinyLLM run.
 
 ``Config`` holds run-level knobs; ``ModelConfig`` holds the architecture and
-``DataConfig`` the pretraining data source and split.
+``DataConfig`` the pretraining data source and split, and ``TokenizerConfig``
+the BPE tokenizer.
 We add fields (optimizer, data, etc.) as later phases require them.
 """
 
@@ -73,6 +74,28 @@ class DataConfig:
         return cls(**data)
 
 
+@dataclass(frozen=True)
+class TokenizerConfig:
+    """BPE tokenizer settings.
+
+    ``vocab_size`` counts the special tokens and must equal
+    ``model.vocab_size``. The trained tokenizer is saved to ``dir`` and that
+    same directory is loaded for pretraining, SFT and evaluation.
+    """
+
+    vocab_size: int = 16000
+    dir: str = "artifacts/tokenizer"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.vocab_size, int) or self.vocab_size <= 0:
+            raise ValueError(f"tokenizer.vocab_size must be a positive int, got {self.vocab_size!r}")
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "TokenizerConfig":
+        _reject_unknown(cls, data, prefix="tokenizer.")
+        return cls(**data)
+
+
 @dataclass
 class Config:
     experiment_id: str = "debug"
@@ -81,6 +104,14 @@ class Config:
     amp_dtype: str = "auto"   # auto | bf16 | fp16 | none
     model: ModelConfig = field(default_factory=ModelConfig)
     data: DataConfig = field(default_factory=DataConfig)
+    tokenizer: TokenizerConfig = field(default_factory=TokenizerConfig)
+
+    def __post_init__(self) -> None:
+        if self.tokenizer.vocab_size != self.model.vocab_size:
+            raise ValueError(
+                f"tokenizer.vocab_size ({self.tokenizer.vocab_size}) must equal "
+                f"model.vocab_size ({self.model.vocab_size})"
+            )
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "Config":
@@ -95,6 +126,8 @@ class Config:
             data["model"] = ModelConfig.from_dict(data["model"] or {})
         if "data" in data:
             data["data"] = DataConfig.from_dict(data["data"] or {})
+        if "tokenizer" in data:
+            data["tokenizer"] = TokenizerConfig.from_dict(data["tokenizer"] or {})
         return cls(**data)
 
     def to_dict(self) -> dict:
