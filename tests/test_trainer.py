@@ -40,6 +40,10 @@ def token_stream(n_blocks: int, seed: int) -> torch.Tensor:
     return torch.randint(1, VOCAB, (n_blocks * MODEL.max_sequence_length,), generator=gen)
 
 
+def blocks(n_blocks: int, seed: int) -> PackedBlocks:
+    return PackedBlocks.from_stream(token_stream(n_blocks, seed), MODEL.max_sequence_length)
+
+
 class ListLogger:
     def __init__(self) -> None:
         self.records: list[dict] = []
@@ -53,7 +57,7 @@ class ListLogger:
 
 def make_trainer(tmp_path: Path, name: str = "t", logger: MetricLogger | None = None, **train) -> Trainer:
     ctx = RunContext.create(make_config(name, **train), results_root=tmp_path)
-    return build_trainer(ctx, token_stream(64, 1), token_stream(16, 2), logger or ListLogger())
+    return build_trainer(ctx, blocks(64, 1), blocks(16, 2), logger or ListLogger())
 
 
 def params(trainer: Trainer) -> dict[str, torch.Tensor]:
@@ -196,7 +200,7 @@ def test_resume_rejects_different_model_config(tmp_path):
     config = make_config("b")
     config.model = other_model
     ctx = RunContext.create(config, results_root=tmp_path)
-    other = build_trainer(ctx, token_stream(64, 1), token_stream(16, 2), ListLogger())
+    other = build_trainer(ctx, blocks(64, 1), blocks(16, 2), ListLogger())
     with pytest.raises(ValueError, match="model config"):
         other.resume(path)
 
@@ -235,11 +239,11 @@ def test_resume_restores_rng_state(tmp_path):
 # ---- data source ----------------------------------------------------------
 
 def test_batch_source_position_restores_exactly():
-    blocks = PackedBlocks(token_stream(10, 0), MODEL.max_sequence_length)
-    a = ShuffledBatchSource(blocks, 4, seed=1)
+    data = blocks(10, 0)
+    a = ShuffledBatchSource(data, 4, seed=1)
     for _ in range(5):  # crosses an epoch boundary (10 blocks // 4 = 2 batches per epoch)
         a.next_batch()
-    b = ShuffledBatchSource(blocks, 4, seed=1)
+    b = ShuffledBatchSource(data, 4, seed=1)
     b.load_state_dict(a.state_dict())
     for _ in range(4):
         assert torch.equal(a.next_batch(), b.next_batch())
@@ -249,8 +253,8 @@ def test_batch_source_position_restores_exactly():
 
 def test_validation_loss_and_perplexity_are_finite(tmp_path):
     trainer = make_trainer(tmp_path)
-    blocks = PackedBlocks(token_stream(16, 2), MODEL.max_sequence_length)
-    evaluator = LossEvaluator(fixed_batches(blocks, 4, 3), torch.device("cpu"),
+    val_blocks = blocks(16, 2)
+    evaluator = LossEvaluator(fixed_batches(val_blocks, 4, 3), torch.device("cpu"),
                               MixedPrecision(torch.device("cpu"), None))
     result = evaluator.evaluate(trainer.model)
     assert math.isfinite(result.loss) and math.isfinite(result.perplexity)
@@ -271,7 +275,7 @@ def test_perplexity_overflow_is_inf():
 def test_fit_logs_required_metrics_and_writes_jsonl(tmp_path):
     ctx = RunContext.create(make_config("logged"), results_root=tmp_path)
     logger = JsonlMetricLogger(ctx.run_dir / "metrics.jsonl")
-    trainer = build_trainer(ctx, token_stream(64, 1), token_stream(16, 2), logger)
+    trainer = build_trainer(ctx, blocks(64, 1), blocks(16, 2), logger)
     trainer.fit()
 
     rows = [json.loads(line) for line in (ctx.run_dir / "metrics.jsonl").read_text().splitlines()]

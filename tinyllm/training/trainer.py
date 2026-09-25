@@ -18,7 +18,7 @@ from tinyllm.model.model import TinyLLM
 from tinyllm.training.checkpoint import Checkpoint, CheckpointManager
 from tinyllm.training.evaluator import Evaluator
 from tinyllm.training.loss import next_token_loss
-from tinyllm.training.metrics import MetricLogger, MetricRecord, device_memory_mb
+from tinyllm.training.metrics import MetricLogger, MetricRecord, device_memory_mb, device_peak_memory_mb
 from tinyllm.training.precision import MixedPrecision
 from tinyllm.training.schedule import LRScheduler
 from tinyllm.utils.repro import capture_rng_state, restore_rng_state
@@ -164,6 +164,7 @@ class Trainer:
             "tokens_per_sec": (self._tokens_seen - self._window_start_tokens) / elapsed,
             "step_time_s": elapsed / self._window_steps,
             "memory_mb": device_memory_mb(self._device),
+            "peak_memory_mb": device_peak_memory_mb(self._device),
         }
         self._logger.log(record)
         self._reset_log_window()  # also keeps the eval pass out of the throughput numbers

@@ -51,6 +51,9 @@ class ModelConfig:
         return cls(**data)
 
 
+DATA_SOURCES = ("cache", "raw")
+
+
 @dataclass(frozen=True)
 class DataConfig:
     """Pretraining data source and its fixed train/validation split.
@@ -63,17 +66,22 @@ class DataConfig:
     text_field: str = "text"
     val_fraction: float = 0.02
     split_seed: int = 42
+    source: str = "cache"  # "cache" = prebuilt token cache (normal); "raw" = tokenize text now (debug)
     token_cache_dir: str = "data/token_cache"  # tokenized + packed splits (git-ignored)
-    max_train_stories: int | None = None  # cap for quick runs; None = the whole split
-    max_val_stories: int | None = None
+    max_train_stories: int | None = None  # raw source only: cap for quick runs
+    max_val_stories: int | None = None    # raw source only
 
     def __post_init__(self) -> None:
         if not 0.0 < self.val_fraction < 1.0:
             raise ValueError(f"data.val_fraction must be in (0, 1), got {self.val_fraction!r}")
+        if self.source not in DATA_SOURCES:
+            raise ValueError(f"data.source must be one of {DATA_SOURCES}, got {self.source!r}")
         for name in ("max_train_stories", "max_val_stories"):
             value = getattr(self, name)
             if value is not None and (not isinstance(value, int) or value <= 0):
                 raise ValueError(f"data.{name} must be a positive int or null, got {value!r}")
+            if value is not None and self.source != "raw":
+                raise ValueError(f"data.{name} only applies to data.source='raw' (a cache is always whole)")
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DataConfig":

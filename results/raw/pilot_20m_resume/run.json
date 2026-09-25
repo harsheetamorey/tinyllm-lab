@@ -1,0 +1,8 @@
+{
+  "experiment_id": "pilot_20m_resume",
+  "started_at": "2026-09-25T00:25:43+00:00",
+  "device": "mps",
+  "amp_dtype": "bfloat16",
+  "git_commit": "d50ead00436447b50c47fa00555a17b06d4ce89d",
+  "git_dirty": true
+}

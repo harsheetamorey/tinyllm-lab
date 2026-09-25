@@ -1,0 +1,23 @@
+# ~22M-parameter TinyLLM on the cached 512-token TinyStories blocks.
+# The train section is the short PILOT setting (60 steps); raise max_steps for a real run.
+# Batch = 4 seqs x 16 accumulation x 512 tokens = 32,768 tokens per optimizer step.
+# micro_batch 16 needs ~7 GB of GPU memory and thrashes on the 8 GB dev Mac; 4 uses ~2.4 GB.
+experiment_id: pilot_20m
+model:
+  vocab_size: 16000
+  hidden_size: 384
+  num_layers: 6
+  num_attention_heads: 6
+  ffn_hidden_size: 1024
+  max_sequence_length: 512
+train:
+  max_steps: 60
+  micro_batch_size: 4
+  grad_accum_steps: 16
+  learning_rate: 6.0e-4
+  min_learning_rate: 6.0e-5
+  warmup_steps: 10
+  log_every: 5
+  eval_every: 20
+  eval_batches: 40
+  checkpoint_every: 30

@@ -16,12 +16,8 @@ import argparse
 import sys
 from pathlib import Path
 
-import torch
-
 from tinyllm.config import Config
-from tinyllm.data.packed_dataset import tokenize_stories
-from tinyllm.data.pretrain_dataset import load_pretrain_splits
-from tinyllm.data.tokenizer_metadata import load_verified_tokenizer
+from tinyllm.data.pretrain_data import PretrainBlocks, load_pretrain_blocks
 from tinyllm.training.checkpoint import CheckpointManager
 from tinyllm.training.factory import build_trainer
 from tinyllm.training.metrics import ConsoleMetricLogger, JsonlMetricLogger, MetricLogger, MultiMetricLogger
@@ -31,24 +27,12 @@ from tinyllm.utils import RunContext
 METRICS_FILE = "metrics.jsonl"
 
 
-def load_token_streams(config: Config) -> tuple[torch.Tensor, torch.Tensor]:
-    """Tokenize the (optionally capped) train and validation splits."""
-    tokenizer = load_verified_tokenizer(config.tokenizer.dir)
-    splits = load_pretrain_splits(config.data)
-    field, data = config.data.text_field, config.data
-
-    def tokens(split: str, cap: int | None) -> torch.Tensor:
-        return tokenize_stories((row[field] for row in splits[split]), tokenizer, cap)
-
-    return tokens("train", data.max_train_stories), tokens("validation", data.max_val_stories)
-
-
 def make_logger(ctx: RunContext) -> MetricLogger:
     return MultiMetricLogger(ConsoleMetricLogger(), JsonlMetricLogger(ctx.run_dir / METRICS_FILE))
 
 
 def start_trainer(
-    config: Config, streams: tuple[torch.Tensor, torch.Tensor], overwrite: bool, resume: bool
+    config: Config, data: PretrainBlocks, overwrite: bool, resume: bool
 ) -> tuple[Trainer, RunContext]:
     """Create the run directory (fresh, overwritten or resumed) and build its trainer."""
     ctx = RunContext.create(config, exist_ok=resume, overwrite=overwrite)
@@ -58,11 +42,22 @@ def start_trainer(
             raise FileNotFoundError(f"no checkpoint to resume from in {ctx.checkpoint_dir}")
     else:
         ctx.save_metadata()
-    trainer = build_trainer(ctx, *streams, logger=make_logger(ctx))
+    trainer = build_trainer(ctx, data.train, data.validation, logger=make_logger(ctx))
     if resume:
         trainer.resume(latest)
         print(f"resumed from {latest} at step {trainer.step}")
     return trainer, ctx
+
+
+def print_run_summary(trainer: Trainer, ctx: RunContext) -> None:
+    """Exact parameter count, batch geometry, device and precision, before training starts."""
+    cfg = ctx.config
+    micro, accum, seq_len = cfg.train.micro_batch_size, cfg.train.grad_accum_steps, cfg.model.max_sequence_length
+    print(f"experiment={cfg.experiment_id} device={ctx.device} amp_dtype={ctx.amp_dtype}")
+    print(f"trainable parameters: {trainer.model.num_parameters():,}")
+    print(f"batch: micro={micro} x accum={accum} = {micro * accum} sequences of {seq_len} "
+          f"= {micro * accum * seq_len:,} tokens per optimizer step; {cfg.train.max_steps} steps "
+          f"= {cfg.train.max_steps * micro * accum * seq_len:,} tokens")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -78,14 +73,16 @@ def main(argv: list[str] | None = None) -> int:
     config = Config.from_yaml(args.config)
     if args.experiment_id:
         config.experiment_id = args.experiment_id
+    data = load_pretrain_blocks(config)
+    print(data.description)
     try:
-        trainer, ctx = start_trainer(config, load_token_streams(config), args.overwrite, args.resume)
+        trainer, ctx = start_trainer(config, data, args.overwrite, args.resume)
     except FileExistsError:
         parser.error(
             f"results/raw/{config.experiment_id} already exists: use a new --experiment-id, "
             "--overwrite to replace it, or --resume to continue it"
         )
-    print(f"device={ctx.device} amp_dtype={ctx.amp_dtype} experiment={config.experiment_id}")
+    print_run_summary(trainer, ctx)
     trainer.fit()
     return 0
 

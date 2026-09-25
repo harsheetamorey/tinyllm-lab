@@ -29,22 +29,31 @@ def tokenize_stories(
 
 
 class PackedBlocks:
-    """A flat token stream viewed as ``len(self)`` non-overlapping blocks of ``seq_len``."""
+    """``[N, seq_len]`` blocks of token ids, held either in memory or as a memory-mapped cache array."""
 
-    def __init__(self, tokens: torch.Tensor, seq_len: int) -> None:
+    def __init__(self, sequences: torch.Tensor | np.ndarray) -> None:
+        if sequences.ndim != 2 or sequences.shape[1] < 2:
+            raise ValueError(f"sequences must be [N, seq_len>=2], got shape {tuple(sequences.shape)}")
+        self._blocks = sequences
+        self.seq_len = sequences.shape[1]
+
+    @classmethod
+    def from_stream(cls, tokens: torch.Tensor, seq_len: int) -> "PackedBlocks":
+        """Cut a flat token stream into non-overlapping blocks, dropping the ragged tail."""
         if tokens.ndim != 1:
             raise ValueError(f"tokens must be 1-D, got shape {tuple(tokens.shape)}")
         if seq_len < 2:
             raise ValueError(f"seq_len must be >= 2, got {seq_len}")
-        self.seq_len = seq_len
-        self._blocks = tokens[: (len(tokens) // seq_len) * seq_len].view(-1, seq_len)
+        return cls(tokens[: (len(tokens) // seq_len) * seq_len].view(-1, seq_len))
 
     def __len__(self) -> int:
         return len(self._blocks)
 
     def get(self, indices: torch.Tensor) -> torch.Tensor:
         """Blocks at ``indices`` as a ``[len(indices), seq_len]`` long tensor."""
-        return self._blocks[indices].long()
+        if isinstance(self._blocks, torch.Tensor):
+            return self._blocks[indices].long()
+        return torch.from_numpy(self._blocks[indices.numpy()].astype(np.int64))
 
 
 class BatchSource(Protocol):

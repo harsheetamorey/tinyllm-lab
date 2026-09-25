@@ -9,6 +9,7 @@ model:
   ffn_hidden_size: 384
   max_sequence_length: 128
 data:
+  source: raw  # 128-token debug run, not the 512-token cache
   max_train_stories: 3000
   max_val_stories: 300
 train:

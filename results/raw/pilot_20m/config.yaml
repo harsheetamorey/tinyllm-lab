@@ -1,0 +1,39 @@
+experiment_id: pilot_20m
+seed: 42
+device: auto
+amp_dtype: auto
+model:
+  vocab_size: 16000
+  hidden_size: 384
+  num_layers: 6
+  num_attention_heads: 6
+  ffn_hidden_size: 1024
+  max_sequence_length: 512
+data:
+  dataset_name: roneneldan/TinyStories
+  text_field: text
+  val_fraction: 0.02
+  split_seed: 42
+  source: cache
+  token_cache_dir: data/token_cache
+  max_train_stories: null
+  max_val_stories: null
+tokenizer:
+  vocab_size: 16000
+  dir: artifacts/tokenizer
+train:
+  max_steps: 60
+  micro_batch_size: 4
+  grad_accum_steps: 16
+  learning_rate: 0.0006
+  min_learning_rate: 6.0e-05
+  warmup_steps: 10
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1.0e-08
+  grad_clip: 1.0
+  log_every: 5
+  eval_every: 20
+  eval_batches: 40
+  checkpoint_every: 30

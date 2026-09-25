@@ -74,3 +74,17 @@ def device_memory_mb(device: torch.device) -> float | None:
     if device.type == "mps":
         return torch.mps.current_allocated_memory() / 2**20
     return None
+
+
+def device_peak_memory_mb(device: torch.device) -> float | None:
+    """Highest memory use so far in MiB; ``None`` on CPU.
+
+    CUDA reports true peak allocation. MPS has no peak counter, so this is the
+    driver's allocated pool, which includes cached blocks and only grows
+    (an upper bound on what the run needs).
+    """
+    if device.type == "cuda":
+        return torch.cuda.max_memory_allocated(device) / 2**20
+    if device.type == "mps":
+        return torch.mps.driver_allocated_memory() / 2**20
+    return None

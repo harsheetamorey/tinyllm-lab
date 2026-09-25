@@ -44,3 +44,14 @@ def test_unknown_model_key_rejected(tmp_path):
 def test_invalid_model_values_rejected(kwargs):
     with pytest.raises(ValueError):
         ModelConfig(**kwargs)
+
+
+def test_data_source_is_validated_and_caps_need_raw():
+    from tinyllm.config import DataConfig
+
+    assert DataConfig().source == "cache"
+    assert DataConfig(source="raw", max_train_stories=10).max_train_stories == 10
+    with pytest.raises(ValueError, match="source"):
+        DataConfig(source="stream")
+    with pytest.raises(ValueError, match="raw"):
+        DataConfig(max_train_stories=10)  # caps make no sense for the whole-split cache

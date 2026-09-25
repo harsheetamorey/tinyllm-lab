@@ -1,8 +1,6 @@
-"""Wires the training components together from a run context and token streams."""
+"""Wires the training components together from a run context and packed token blocks."""
 
 from __future__ import annotations
-
-import torch
 
 from tinyllm.data.packed_dataset import PackedBlocks, ShuffledBatchSource, fixed_batches
 from tinyllm.model.model import TinyLLM
@@ -18,29 +16,30 @@ from tinyllm.utils.run_context import RunContext
 
 def build_trainer(
     ctx: RunContext,
-    train_tokens: torch.Tensor,
-    val_tokens: torch.Tensor,
+    train_blocks: PackedBlocks,
+    val_blocks: PackedBlocks,
     logger: MetricLogger,
 ) -> Trainer:
     """Build a ready-to-run :class:`Trainer` for ``ctx.config``.
 
-    ``train_tokens`` / ``val_tokens`` are flat token streams (see
-    ``tinyllm.data.packed_dataset.tokenize_stories``). The model is created
+    The blocks must be ``model.max_sequence_length`` long (see
+    ``tinyllm.data.pretrain_data.load_pretrain_blocks``). The model is created
     after the context's seeding, so a given seed always gives the same init.
     """
     config, device = ctx.config, ctx.device
-    seq_len = config.model.max_sequence_length
+    for name, blocks in (("train", train_blocks), ("validation", val_blocks)):
+        if blocks.seq_len != config.model.max_sequence_length:
+            raise ValueError(
+                f"{name} blocks are {blocks.seq_len} tokens but model.max_sequence_length "
+                f"is {config.model.max_sequence_length}"
+            )
     precision = MixedPrecision(device, ctx.amp_dtype)
 
     model = TinyLLM(config.model).to(device)
     optimizer = build_optimizer(model, config.train)
     scheduler = WarmupCosineScheduler(optimizer, config.train)
-    batches = ShuffledBatchSource(
-        PackedBlocks(train_tokens, seq_len), config.train.micro_batch_size, config.seed
-    )
-    val_batches = fixed_batches(
-        PackedBlocks(val_tokens, seq_len), config.train.micro_batch_size, config.train.eval_batches
-    )
+    batches = ShuffledBatchSource(train_blocks, config.train.micro_batch_size, config.seed)
+    val_batches = fixed_batches(val_blocks, config.train.micro_batch_size, config.train.eval_batches)
     return Trainer(
         config=config,
         model=model,
